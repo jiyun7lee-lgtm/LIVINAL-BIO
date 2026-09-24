@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <title>LIVINAL BIO 투약 기록지</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: #dfe3e6;
+            color: #17191b;
+            font-family: Arial, "Noto Sans KR", sans-serif
+        }
+
+        .app {
+            max-width: 760px;
+            margin: auto;
+            padding: 14px 12px 44px
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 7px
+        }
+
+        .backrow {
+            display: flex;
+            justify-content: flex-end;
+            gap: 7px;
+            margin-top: 7px
+        }
+
+        .backtop {
+            min-height: 32px;
+            border: 0;
+            border-radius: 7px;
+            background: #596066;
+            color: #fff;
+            font-weight: 700;
+            padding: 0 12px;
+            font-size: 11px
+        }
+
+        .controls button,
+        .mainbtn {
+            min-height: 42px;
+            border: 0;
+            border-radius: 8px;
+            background: #252a2e;
+            color: #fff;
+            font-weight: 700
+        }
+
+        .controls .vax {
+            background: #315f7b
+        }
+
+        .controls .change {
+            background: #596066
+        }
+
+        .paper-gap {
+            height: 38px
+        }
+
+        .paper {
+            background: #fbfaf5;
+            border: 1px solid #a9aaab;
+            box-shadow: 0 4px 18px #0002;
+            padding: 14px 14px 12px;
+            min-height: calc(100vh - 120px);
+            position: relative
+        }
+
+        .paper:before {
+            content: "";
+            position: absolute;
+            inset: 6px;
+            border: 1px solid #d4d1c7;
+            pointer-events: none
+        }
+
+        .paper>* {
+            position: relative
+        }
+
+        .brand {
+            text-align: center;
+            font-size: 12px;
+            letter-spacing: .25em;
+            font-weight: 800
+        }
+
+        .title {
+            text-align: center;
+            font-size: 21px;
+            font-weight: 900;
+            letter-spacing: .28em;
+            margin: 3px 0 11px
+        }
+
+        .back {
+            position: absolute;
+            right: 8px;
+            top: -2px;
+            border: 1px solid #777;
+            background: transparent;
+            border-radius: 3px;
+            width: 30px;
+            height: 27px;
+            font-size: 17px
+        }
+
+        .patient-head {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr .7fr;
+            border-top: 2px solid #555;
+            border-bottom: 1px solid #777
+        }
+
+        .field {
+            padding: 6px 7px;
+            border-right: 1px solid #aaa;
+            font-size: 12px
+        }
+
+        .field:last-child {
+            border-right: 0
+        }
+
+        .field small {
+            display: block;
+            font-size: 8px;
+            color: #777;
+            letter-spacing: .08em
+        }
+
+        .field b {
+            font-size: 13px
+        }
+
+        .oxline {
+            padding: 6px 7px;
+            border-bottom: 1px solid #777;
+            font-size: 10px;
+            white-space: nowrap;
+            overflow: hidden
+        }
+
+        .oxline b {
+            font-size: 12px;
+            letter-spacing: 3px
+        }
+
+        .record-title {
+            font-size: 9px;
+            letter-spacing: .15em;
+            margin: 7px 0 4px;
+            color: #555
+        }
+
+        .record-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border: 1px solid #777
+        }
+
+        .col:first-child {
+            border-right: 1px solid #777
+        }
+
+        .r {
+            display: grid;
+            grid-template-columns: 25px 22px minmax(0, 1fr);
+            height: 27px;
+            align-items: center;
+            border-bottom: 1px solid #d1d1cd;
+            font-size: 10px;
+            padding: 0 4px
+        }
+
+        .r:last-child {
+            border-bottom: 0
+        }
+
+        .num {
+            color: #666;
+            font-variant-numeric: tabular-nums
+        }
+
+        .judge {
+            font-weight: 900;
+            text-align: center
+        }
+
+        .symptom {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .phase {
+            font-size: 7px;
+            margin-right: 3px;
+            color: #555;
+            font-weight: 700
+        }
+
+        .reaction-text {
+            display: inline
+        }
+
+        .second-reaction .reaction-name {
+            color: #1269ad;
+            font-weight: 800
+        }
+
+        .cleared {
+            text-decoration: line-through;
+            text-decoration-thickness: 1.5px;
+            color: #999
+        }
+
+        .cleared .reaction-name {
+            color: #999
+        }
+
+        .third-inline {
+            color: #111 !important;
+            font-weight: 900;
+            margin-left: 6px;
+            font-size: 8px;
+            white-space: nowrap;
+            text-decoration: none !important
+        }
+
+        .judge {
+            color: #111 !important
+        }
+
+        .notes {
+            border: 1px solid #777;
+            border-top: 0;
+            min-height: 72px;
+            padding: 6px 8px
+        }
+
+        .notes h3 {
+            font-size: 9px;
+            letter-spacing: .16em;
+            margin: 0 0 4px
+        }
+
+        .note {
+            font-size: 9px;
+            line-height: 1.45
+        }
+
+        .stamp {
+            font-size: 8px;
+            color: #777;
+            text-align: right;
+            margin-top: 5px
+        }
+
+        .status {
+            font-size: 12px;
+            color: #555;
+            margin-top: 7px;
+            min-height: 17px
+        }
+
+        .hidden {
+            display: none
+        }
+
+        .setup {
+            max-width: 600px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 14px
+        }
+
+        .setup h1 {
+            margin: 0
+        }
+
+        .setup input {
+            width: 100%;
+            height: 44px;
+            border: 1px solid #bbb;
+            border-radius: 8px;
+            padding: 0 11px;
+            margin: 6px 0
+        }
+
+        .setup button {
+            min-height: 42px;
+            border: 0;
+            border-radius: 8px;
+            padding: 0 13px;
+            background: #222;
+            color: #fff;
+            font-weight: 700
+        }
+
+        .results {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 6px
+        }
+
+        .patientrow {
+            display: grid;
+            grid-template-columns: 1fr 42px;
+            align-items: stretch;
+            background: #fff;
+            border-bottom: 1px solid #e6e6e6
+        }
+
+        .patientrow:last-child {
+            border-bottom: 0
+        }
+
+        .pick {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 0;
+            background: #fff !important;
+            color: #111 !important;
+            padding: 10px;
+            text-align: left
+        }
+
+        .pick b,
+        .pick span {
+            color: #111 !important
+        }
+
+        .deletePatient {
+            border: 0;
+            border-left: 1px solid #eee;
+            background: #fff !important;
+            color: #222 !important;
+            font-size: 17px;
+            cursor: pointer
+        }
+
+        .muted {
+            font-size: 11px;
+            color: #888
+        }
+
+        @media(max-width:520px) {
+            .app {
+                padding: 10px 8px 35px
+            }
+
+            .controls {
+                gap: 5px
+            }
+
+            .controls button {
+                font-size: 11px;
+                padding: 0 5px
+            }
+
+            .paper-gap {
+                height: 34px
+            }
+
+            .paper {
+                padding: 12px 10px 10px;
+                min-height: 0
+            }
+
+            .title {
+                font-size: 18px
+            }
+
+            .field {
+                padding: 5px;
+                font-size: 10px
+            }
+
+            .field b {
+                font-size: 11px
+            }
+
+            .r {
+                height: 25px;
+                font-size: 9.5px;
+                grid-template-columns: 22px 20px minmax(0, 1fr)
+            }
+
+            .notes {
+                min-height: 62px
+            }
+        }
+
+        .phase {
+            font-size: 7px;
+            margin-right: 3px;
+            color: #555;
+            font-weight: 700
+        }
+
+        .second-reaction .reaction-name {
+            color: #1269ad;
+            font-weight: 800
+        }
+
+        .cleared {
+            text-decoration: line-through;
+            text-decoration-thickness: 1.5px;
+            color: #999
+        }
+
+        .cleared .reaction-name {
+            color: #999
+        }
+
+        .third-inline {
+            color: #111 !important;
+            font-weight: 900;
+            margin-left: 6px;
+            font-size: 8px;
+            white-space: nowrap;
+            text-decoration: none !important
+        }
+
+        .judge {
+            color: #111 !important
+        }
+    </style>
+</head>
+
+<body>
+    <section id="setup" class="setup">
+        <h1>LIVINAL BIO</h1>
+        <div class="muted">PATIENT RECORD SYSTEM</div>
+        <p><input id="newName" maxlength="40" placeholder="신규 환자명"><button id="create">신규 환자 등록</button></p>
+        <input id="search" maxlength="40" placeholder="환자명 / 환자번호 검색">
+        <div id="searchResults" class="results hidden"></div>
+        <h3>전체 환자</h3>
+        <div id="patientList" class="results">
+            <div class="muted" style="padding:10px">불러오는 중...</div>
+        </div>
+        <div id="setupStatus" class="status"></div>
+    </section>
+
+    <main id="app" class="app hidden">
+        <div class="controls">
+            <button id="inject">1차 투여</button><button id="second">2차 투여</button><button class="vax" id="vaccine">백신
+                투여</button>
+        </div>
+        <div class="backrow"><button class="backtop" id="undo">↶ 마지막 투여 취소</button><button class="backtop" id="back">←
+                환자 목록</button></div>
+        <div id="actionStatus" class="status"></div>
+        <div class="paper-gap"></div>
+        <article class="paper" id="paper">
+            <div class="brand">LIVINAL BIO</div>
+            <div class="title">투약 기록지</div>
+            <div class="patient-head">
+                <div class="field"><small>PATIENT NAME</small><b id="vName">-</b></div>
+                <div class="field"><small>PATIENT ID</small><b id="vCode">-</b></div>
+                <div class="field"><small>FORMULATION</small><b id="vCount">LB-D01</b></div>
+            </div>
+            <div class="oxline">CUMULATIVE&nbsp;&nbsp;<b id="ox">-</b></div>
+            <div class="record-title">ADMINISTRATION / REACTION RECORD</div>
+            <div class="record-grid">
+                <div class="col" id="left"></div>
+                <div class="col" id="right"></div>
+            </div>
+            <div class="notes">
+                <h3>SPECIAL NOTES / 특이사항</h3>
+                <div id="notes" class="muted">특이사항 없음</div>
+            </div>
+            <div class="stamp">LIVINAL BIO · CLINICAL RESEARCH DIVISION</div>
+        </article>
+    </main>
+
+    <script>
+        const SUPABASE_URL = "https://nkecggfqocaxyqwxkuni.supabase.co";
+        const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_65C9sEiO2B6Y7bT6QUF82A_pegFPxdF";
+        const configured = !SUPABASE_URL.includes("YOUR-PROJECT") && !SUPABASE_PUBLISHABLE_KEY.includes("YOUR_");
+        const sb = configured ? supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
+        let patientCode = null, timer = null;
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        function ready() { if (!configured) { alert("index_v3.html에 Supabase URL과 Publishable Key를 입력하세요."); return false } return true }
+        function pbtn(p) { return `<div class="patientrow"><button class="pick" data-code="${esc(p.patient_code)}"><b>${esc(p.patient_name)}</b><span>${esc(p.patient_code)}</span></button><button class="deletePatient" data-code="${esc(p.patient_code)}" data-name="${esc(p.patient_name)}" title="환자 삭제" aria-label="환자 삭제">🗑</button></div>` }
+        function bind(el) { el.querySelectorAll(".pick").forEach(b => b.onclick = () => loadPatient(b.dataset.code)); el.querySelectorAll(".deletePatient").forEach(b => b.onclick = () => deletePatient(b.dataset.code, b.dataset.name)) }
+        async function listPatients(q = "") { if (!ready()) return; const { data, error } = await sb.rpc("search_patients", { p_query: q }); if (error) { $("setupStatus").textContent = error.message; return } const el = q ? $("searchResults") : $("patientList"); el.innerHTML = data.length ? data.map(pbtn).join("") : '<div class="muted" style="padding:10px">검색 결과 없음</div>'; bind(el); if (q) el.classList.remove("hidden") }
+        async function deletePatient(c, n) { if (!ready()) return; if (!confirm(`"${n}" 환자와 모든 투약 기록을 삭제할까요?\n삭제 후 복구할 수 없습니다.`)) return; const { error } = await sb.rpc("delete_patient_v3", { p_patient_code: c }); if (error) { $("setupStatus").textContent = error.message; return } $("setupStatus").textContent = `${n} 환자 기록을 삭제했습니다.`; $("searchResults").classList.add("hidden"); $("search").value = ""; await listPatients("") }
+        async function undoLast() {
+            if (!patientCode || !ready()) return;
+            if (!confirm("가장 최근 투여 1회를 취소할까요?\n이 회차로 생긴 3차 발현도 다시 계산됩니다.")) return;
+            const { error } = await sb.rpc("undo_last_dose_v36", { p_patient_code: patientCode });
+            if (error) { $("actionStatus").textContent = error.message; return }
+            $("actionStatus").textContent = "마지막 투여를 취소했습니다.";
+            await loadPatient(patientCode);
+        }
+        async function createPatient() { if (!ready()) return; const { data, error } = await sb.rpc("create_patient", { p_name: $("newName").value.trim() || "이름 미상" }); if (error) { $("setupStatus").textContent = error.message; return } await loadPatient(data.patient_code) }
+        async function loadPatient(c) { const { data, error } = await sb.rpc("get_patient_record_v3", { p_patient_code: c }); if (error || !data) { $("setupStatus").textContent = error?.message || "환자를 찾을 수 없습니다."; return } patientCode = c; render(data); $("setup").classList.add("hidden"); $("app").classList.remove("hidden"); window.scrollTo(0, 0) }
+        function goList() { $("app").classList.add("hidden"); $("setup").classList.remove("hidden"); listPatients(""); window.scrollTo(0, 0) }
+        function row(slot) {
+            if (!slot) return `<div class="r"><span class="num">--</span><span class="judge">-</span><span class="symptom">-</span></div>`;
+            let empty = (slot.result === "-" || !slot.kind);
+            let phase = empty ? "" : (slot.kind === "SECOND" ? "2차" : "1차");
+            let symptomClass = "reaction-text" + (slot.kind === "SECOND" ? " second-reaction" : "") + (slot.cleared ? " cleared" : "");
+            let phaseHtml = phase ? `<small class="phase">${phase}</small>` : "";
+            let reactionHtml = empty ? `<span class="reaction-text">-</span>` : `<span class="${symptomClass}">${phaseHtml}<span class="reaction-name">${esc(slot.reaction)}</span></span>`;
+            let third = slot.third_effect ? `<b class="third-inline">${esc(slot.third_effect)}</b>` : "";
+            return `<div class="r"><span class="num">${String(slot.slot_number).padStart(2, "0")}</span><span class="judge">${esc(slot.result)}</span><span class="symptom">${reactionHtml}${third}</span></div>`
+        }
+        function render(r) {
+            $("vName").textContent = r.patient_name; $("vCode").textContent = r.display_id || r.patient_code; $("vCount").textContent = r.formulation || "LB-D01"; $("ox").textContent = r.ox_record || "-";
+            const map = {}; (r.slots || []).forEach(x => map[x.slot_number] = x);
+            $("left").innerHTML = Array.from({ length: 10 }, (_, i) => row(map[i + 1] || { slot_number: i + 1, result: "-", reaction: "-" })).join("");
+            $("right").innerHTML = Array.from({ length: 10 }, (_, i) => row(map[i + 11] || { slot_number: i + 11, result: "-", reaction: "-" })).join("");
+            const thirds = r.third_reactions || [], events = r.events || [];
+            let notes = [];
+            const animalCount = thirds.filter(t => t.effect === "동물성 발현").length;
+            const atypicalCount = thirds.filter(t => t.effect === "비정형 발현").length;
+            if (animalCount) notes.push(`<div class="note"><b>동물성 발현</b> ${animalCount}회</div>`);
+            if (atypicalCount) notes.push(`<div class="note"><b>비정형 발현</b> ${atypicalCount}회</div>`);
+            events.filter(e => e.event_type === "VACCINE").forEach(e => notes.push(`<div class="note">${esc(e.label)}</div>`));
+            $("notes").innerHTML = notes.length ? notes.join("") : '<span class="muted">특이사항 없음</span>';
+        }
+        async function action(fn, loading, done) { if (!patientCode || !ready()) return;["inject", "second", "vaccine"].forEach(x => $(x).disabled = true); $("actionStatus").textContent = loading; const { data, error } = await sb.rpc(fn, { p_patient_code: patientCode }); if (error) { $("actionStatus").textContent = error.message } else { render(data); $("actionStatus").textContent = done(data) } ["inject", "second", "vaccine"].forEach(x => $(x).disabled = false) }
+        $("create").onclick = createPatient; $("back").onclick = goList; $("undo").onclick = undoLast;
+        $("search").oninput = e => { clearTimeout(timer); const q = e.target.value.trim(); if (!q) { $("searchResults").classList.add("hidden"); return } timer = setTimeout(() => listPatients(q), 150) };
+        $("inject").onclick = () => action("administer_injection_v3", "1차 투약 처리 중...", d => `${d.latest.slot_number}번 · ${d.latest.result} / ${d.latest.reaction}`);
+        $("second").onclick = () => action("administer_second_v3", "2차 투약 처리 중...", d => `${d.latest.slot_number}번 · ${d.latest.result} / ${d.latest.reaction}`);
+        $("vaccine").onclick = () => action("administer_vaccine_v3", "백신 처리 중...", d => "현재 1·2차 반응 처리 완료");
+        if (configured) listPatients("");
+    </script>
+</body>
+
+</html>
